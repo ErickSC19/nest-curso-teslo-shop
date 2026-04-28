@@ -3,6 +3,7 @@ import {
   Injectable,
   InternalServerErrorException,
   Logger,
+  NotFoundException,
 } from '@nestjs/common';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
@@ -29,28 +30,55 @@ export class ProductsService {
     }
   }
 
-  findAll() {
-    return `This action returns all products`;
+  async findAll() {
+    try {
+      return await this.productsRepository.find();
+    } catch (error: any) {
+      this.handleDBExceptions(error);
+    }
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} product`;
+  async findOne(id: string) {
+    try {
+      const prod = await this.productsRepository.findOneBy({ id });
+      if (!prod) {
+        throw new NotFoundException(`Product with ID ${id} not found`);
+      }
+      return prod;
+    } catch (error: any) {
+      this.handleDBExceptions(error);
+    }
   }
 
-  update(id: number, updateProductDto: UpdateProductDto) {
+  update(id: string, updateProductDto: UpdateProductDto) {
     return `This action updates a #${id} product`;
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} product`;
+  async remove(id: string) {
+    try {
+      const prod = await this.productsRepository.findOneByOrFail({ id });
+      await this.productsRepository.remove(prod);
+    } catch (error: any) {
+      this.handleDBExceptions(error);
+    }
   }
 
   private handleDBExceptions(error: any) {
-    if (error.code === '23505') {
-      throw new BadRequestException(error.detail);
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    if (error?.code === '23505') {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      throw new BadRequestException(error?.detail);
     }
 
     this.logger.error(error);
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+    if (Object.keys(error).includes('message')) {
+      throw new InternalServerErrorException(
+        'Unexpected error: ',
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
+        error.message,
+      );
+    }
     throw new InternalServerErrorException(
       'Unexpected error, check server logs',
     );

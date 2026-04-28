@@ -11,4 +11,4 @@
 ```
 docker-compose up -d
 ```
-5. Levantar: ```pnpm start:dev```
+5. Levantar: ```pnpm run start:dev```

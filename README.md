@@ -12,3 +12,7 @@
 docker-compose up -d
 ```
 5. Levantar: ```pnpm run start:dev```
+6. Ejecutar seed
+```
+http://localhost:3000/api/seed
+```
